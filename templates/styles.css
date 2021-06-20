@@ -1,0 +1,34 @@
+html {
+    width: 100%;
+}
+body {
+    margin: 2em;
+}
+h1 {
+    font-size: 2em;
+    text-transform: uppercase;
+    font-family: 'Julius Sans One', sans-serif;
+}
+h2 {
+    font-size: 1.5em;
+}
+
+a:link {
+    font-weight: bold;
+    text-decoration: none;
+    color: #0d8ba1;
+}
+a:visited {
+    font-weight: bold;
+    text-decoration: none;
+    color: #1a5952;
+}
+a:hover, a:focus, a:active {
+    text-decoration: underline;
+    color: #9685BA;
+}
+p {
+    font-size: 1.2em;
+    text-align: justify;
+    text-justify: inter-word;
+}

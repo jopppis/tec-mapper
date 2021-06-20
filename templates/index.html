@@ -1,0 +1,16 @@
+{% extends base %}
+
+{% block title %}TEC Map Generator{% endblock %}
+
+{% block postamble %}
+  <style>
+    {% include 'styles.css' %}
+  </style>
+{% endblock %}
+
+{% block contents %}
+  <div class="content">
+    <h1>Generate a TEC map</h1>
+    {{ super() }}
+  </div>
+{% endblock %}
