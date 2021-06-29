@@ -12,26 +12,16 @@ from tecmap import TecMap
 class IonexHandler:
     """Class to read IONEX file and store TEC maps extracted from the IONEX data."""
 
-    def __init__(self, ionex_str=None, file_path=None):
+    def __init__(self, ionex_str=None):
         """Init the instance.
 
-        Args:
-            filename ([str, Path]): IONEX file to read.
-            ionex_str ([str]): IONEX stored as a string.
-        """
-        # make sure we got either file or a string for the IONEX data
-        if file_path is None and ionex_str is None:
-            raise Exception("IonexHandler requires a file_path or ionex_str")
-
-        if file_path is not None and ionex_str is not None:
-            print("IonexHandler received both file_path and ionex_str, ignoring file_path")
-
-
-        if ionex_str is None:
-            # read file is provided
+        IONEX file can be simply input as:
             with open(file_path) as f:
-                ionex_str = f.read()
+                ionex_handler = IonexHandler(f.read())
 
+        Args:
+            ionex_str ([str]): IONEX file stored as a string.
+        """
         self.ionex_str = ionex_str
 
         self._tec_maps = self._get_tec_maps()
