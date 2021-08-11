@@ -58,6 +58,10 @@ class IonexHandler:
             full_map_str ([str]): String representing the
             exponent (int, optional): Exponent to scale the TEC values. Defaults to -1.
 
+        Note: This is from https://github.com/daniestevez/jupyter_notebooks/blob/master/LICENSE
+        The code violates GPL3 so either the tool goes GPL3 or the code goes away.
+
+
         Returns:
             [TecMap]: [description]
         """
@@ -65,7 +69,7 @@ class IonexHandler:
         map_str = re.split(".*END OF TEC MAP", map_str)[0]
 
         # get epoch of the map
-        epoch_str = re.split("EPOCH OF CURRENT", map_str)[0]
+        epoch_str = re.split("EPOCH OF CURRENT MAP", map_str)[0]
         epoch_list = np.fromstring(epoch_str, sep=" ", dtype=int)
         epoch_datetime = datetime.datetime(*epoch_list)
 
