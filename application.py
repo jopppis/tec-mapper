@@ -2,8 +2,8 @@
 """IONEX file handling."""
 
 from collections import OrderedDict
-from ftplib import FTP
 import ftplib
+import pycurl
 from functools import partial
 from pathlib import Path
 import datetime
@@ -11,7 +11,7 @@ import unlzw3
 import os
 import tempfile
 
-from bokeh.models.widgets import Div, DatePicker, Slider
+from bokeh.models.widgets import Div, DatePicker, Slider, Dropdown
 from bokeh.layouts import column, row
 from bokeh.plotting import curdoc
 
@@ -22,6 +22,20 @@ class TecMapperApplication:
     """TEC mapper bokeh application."""
 
     _BOKEH_DATE_FMT = "%Y-%m-%d"
+
+    ANALYSIS_CENTERS = {
+        "cod": "CODE",
+        "cor": "CODE Rapid",
+        "c1p": "CODE 1d",
+        "c2p": "CODE 2d",
+        "emr": "NRCAN",
+        "esa": "ESA",
+        "esr": "ESA Rapid",
+        "jpl": "JPL",
+        "jpr": "JPL Rapid",
+        "igs": "IGS",
+        "igr": "IGS Rapid",
+    }
 
     def __init__(self, cache_dir=None, starting_date=None):
         """Init instance of application.
@@ -47,7 +61,7 @@ class TecMapperApplication:
             starting_date = self._yesterday.strftime(self._BOKEH_DATE_FMT)
 
         # user selection dict
-        self._selections = dict(analysis_center="CODE", date_str=starting_date, hour=12, max_tec=100)
+        self._selections = dict(analysis_center="c2p", date_str=starting_date, hour=12, max_tec=100)
 
         # IONEX data handler
         self._ionex_handler = None
@@ -58,8 +72,7 @@ class TecMapperApplication:
         self._init = True
 
         # make initial plot
-        self._ionex_handler = IonexHandler(self._get_ionex_str())
-        self._update_tec_map()
+        self._update_ionex()
 
         # update ui
         self._update_ui()
@@ -87,10 +100,7 @@ class TecMapperApplication:
     @property
     def analysis_center_fn(self):
         """Get analysis center part of the filename string."""
-        if self._selections["analysis_center"] == "CODE":
-            return "codg"
-
-        raise NotImplementedError("Only CODE analysis center implemented currently")
+        return f"{self._selections['analysis_center']}g"
 
     @property
     def filename(self):
@@ -143,15 +153,26 @@ class TecMapperApplication:
 
     def _download_ionex(self, dest_path, remove_on_error=False):
         """Download IONEX file."""
-        ftp = FTP("gssc.esa.int")
-        ftp.login()
-        ftp.cwd(f"igs/products/ionex/{self.year_centry}/{self.doy}")
-        try:
-            with open(dest_path, "wb") as fp:
-                ftp.retrbinary(f"RETR {self.filename}", fp.write)
-        except ftplib.error_perm:
-            # signal failure
-            return False
+
+        # ftplib does not play nicely with ufw firewall
+        # ftp = ftplib.FTP("gssc.esa.int", timeout=10)
+        # ftp.login()
+        # try:
+        #     print(f"igs/products/ionex/{self.year_centry}/{self.doy}/{self.filename}")
+        #     ftp.cwd(f"igs/products/ionex/{self.year_centry}/{self.doy}")
+        #     with open(dest_path, "wb") as fp:
+        #         ftp.retrbinary(f"RETR {self.filename}", fp.write)
+        # except ftplib.error_perm:
+        #     # signal failure
+        #     return False
+        with open(dest_path, "wb") as fp:
+            curl = pycurl.Curl()
+            ftp_path = f"igs/products/ionex/{self.year_centry}/{self.doy}/{self.filename}"
+            curl.setopt(pycurl.URL, f"ftp://gssc.esa.int/{ftp_path}")
+            curl.setopt(pycurl.FTPPORT, ":54010-54020")
+            curl.setopt(pycurl.WRITEDATA, fp)
+            curl.perform()
+            curl.close()
 
     def _update_tec_map(self):
         """Update tec map plot."""
@@ -161,9 +182,8 @@ class TecMapperApplication:
         # create IONEX handler
         if tec_map is None:
             self._ui_elements["plots"] = [Div(text="<h1>No IONEX data available for the given selection</h1>", width=800)]
-            return
-
-        self._ui_elements["plots"] = [tec_map.plot(self._selections["max_tec"])]
+        else:
+            self._ui_elements["plots"] = [tec_map.plot(self._selections["max_tec"])]
 
         self._update_ui()
 
@@ -182,6 +202,7 @@ class TecMapperApplication:
 
         if not curdoc().roots:
             curdoc().add_root(self._get_ui_column())
+            curdoc().title = "TEC Map Generator"
         else:
             curdoc().roots[0].children = [self._get_ui_column()]
 
@@ -191,33 +212,38 @@ class TecMapperApplication:
         Args:
             elements: List of UI elements
         """
-        elements = [Div(text="<h2>Pick date and hour of day:</h2>")]
-
-        picker_row_elements = []
+        elements = []
 
         # add date picker
         date_picker = DatePicker(
             title="Date", value=self._selections["date_str"], min_date="2000-01-01", max_date=self._yesterday
         )
         date_picker.on_change("value", self._update_date_selection)
-        picker_row_elements.append(date_picker)
 
         # add hour picker
         hour_slider = Slider(start=0, end=23, value=self._selections["hour"], step=1, title="Hour of day")
-        hour_slider.on_change("value", partial(self.update_def_selection, key="hour"))
-        picker_row_elements.append(hour_slider)
+        hour_slider.on_change("value", partial(self._update_def_selection, key="hour"))
 
-        elements.append(row(picker_row_elements))
+        # add pickers
+        elements.append(Div(text="<h2>Pick date and hour of day:</h2>"))
+        elements.append(row([date_picker, hour_slider]))
+
+        # add analysis center selector
+        menu = [(val, key) for key, val in self.ANALYSIS_CENTERS.items()]
+        analysis_center = Dropdown(label="Analysis center", menu=menu, css_classes =['custom_button_bokeh'])
+        analysis_center.on_click(partial(self._update_analysis_center_selection, analysis_center))
+        self._set_analysis_center_selection_label(analysis_center, self._selections["analysis_center"])
 
         # add max tec slider
-        max_tec = Slider(start=0, end=200, value=self._selections["max_tec"], step=5, title="Max TEC [TECU]")
-        max_tec.on_change("value", partial(self.update_def_selection, key="max_tec"))
-        elements.append(max_tec)
+        max_tec = Slider(start=5, end=200, value=self._selections["max_tec"], step=5, title="Max TEC [TECU]")
+        max_tec.on_change("value", partial(self._update_def_selection, key="max_tec"))
 
+        elements.append(Div(text="<h2>Configure IONEX handling:</h2>"))
+        elements.append(row(analysis_center, max_tec))
 
         self._ui_elements["pickers"] = [column(elements)]
 
-    def update_def_selection(self, attr, old, new, key):
+    def _update_def_selection(self, attr, old, new, key):
         """Update user selections."""
         # convert string to date
         self._selections[key] = new
@@ -227,6 +253,22 @@ class TecMapperApplication:
     def _update_date_selection(self, attr, old, new):
         """Update user selections."""
         self._selections["date_str"] = new
+        self._update_ionex()
+
+    def _set_analysis_center_selection_label(self, dropdown, analysis_center_acro):
+        """Set label for the analysis center selection."""
+        dropdown.label = f"Analysis center - {self.ANALYSIS_CENTERS[analysis_center_acro]}"
+
+    def _update_analysis_center_selection(self, dropdown, event):
+        """Update user selection of the analysis center."""
+        self._selections["analysis_center"] = event.item
+
+        self._set_analysis_center_selection_label(dropdown, self._selections["analysis_center"])
+
+        self._update_ionex()
+
+    def _update_ionex(self):
+        """Update used IONEX file."""
         self._ionex_handler = IonexHandler(self._get_ionex_str())
 
         self._update_tec_map()

@@ -1,14 +1,20 @@
 """TEC map handling module."""
 
+from pathlib import Path
+from functools import partial
 
 import numpy as np
+from pyproj import CRS, Transformer
 from bokeh.models.widgets import Div
 from bokeh.layouts import column
+from bokeh.themes import Theme
 from bokeh.plotting import figure, curdoc
-
 from bokeh.models import LinearColorMapper, ColorBar
 from bokeh.palettes import Viridis
 
+import holoviews as hv
+import holoviews.plotting.bokeh
+import geoviews as gw
 
 class TecMap:
     """TEC map class.
@@ -125,4 +131,14 @@ class TecMap:
         # Specify figure layout.
         plot.add_layout(color_bar, "right")
 
-        return plot
+        renderer = hv.renderer('bokeh').instance(mode='server')
+        dir_path = Path(__file__).parent.resolve()
+        yaml_path = dir_path / "theme.yaml"
+        renderer.theme = Theme(yaml_path)
+        img = gw.Image(self.map, bounds=(-180, -87.5, 180, 87.5))
+        img = img.redim.range(z=(0, max_tec))
+        img.opts(width=self.PLOT_WIDTH, height=self.PLOT_HEIGHT, cmap="Viridis", colorbar=True)
+        hvplot = renderer.get_plot(img * gw.feature.coastline(), curdoc())
+        layout = hvplot.state
+        title_div = Div(text=f"<h1>TEC Map for {self.epoch_str}</h1>", style={"text-align": "center"}, width=self.PLOT_WIDTH)
+        return column(title_div, layout)
