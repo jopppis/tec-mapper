@@ -1,10 +1,8 @@
 """TEC map handling module."""
 
 from pathlib import Path
-from functools import partial
 
 import numpy as np
-from pyproj import CRS, Transformer
 from bokeh.models.widgets import Div
 from bokeh.layouts import column
 from bokeh.themes import Theme
@@ -15,6 +13,7 @@ from bokeh.palettes import Viridis
 import holoviews as hv
 import holoviews.plotting.bokeh
 import geoviews as gw
+
 
 class TecMap:
     """TEC map class.
