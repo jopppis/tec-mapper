@@ -3,6 +3,7 @@
 
 import datetime
 import re
+from dataclasses import dataclass
 # import ftplib
 import os
 import tempfile
@@ -12,7 +13,7 @@ import pycurl
 import unlzw3
 import numpy as np
 
-from tecmap import TecMap
+from tecmap import MapBounds, TecMap
 
 
 class IonexDownloader:
@@ -113,7 +114,7 @@ class IonexHandler:
 
         self.exponent = self._get_exponent()
 
-        self.bounds = dict(lat=[87.5, -87.5], dlat=2.5, lon=[-180, 180], dlon=5)
+        self.bounds = MapBounds()
 
         self._get_bound("lat")
         self._get_bound("lon")
@@ -124,12 +125,10 @@ class IonexHandler:
     @property
     def map_shape(self):
         """Get shape of the map array."""
-        num_rows = (self.bounds["lat"][0] - self.bounds["lat"][1]) / self.bounds["dlat"] + 1
-        num_cols = (self.bounds["lon"][1] - self.bounds["lon"][0]) / self.bounds["dlon"] + 1
-        return int(num_rows), int(num_cols)
+        return self.bounds.num_rows, self.bounds.num_cols
 
-    def _get_bound(self, bound_str):
-        line_matcher = f"{bound_str.upper()}1 / {bound_str.upper()}2 / D{bound_str.upper()}"
+    def _get_bound(self, bound_type_str):
+        line_matcher = f"{bound_type_str.upper()}1 / {bound_type_str.upper()}2 / D{bound_type_str.upper()}"
         if line_matcher in self.ionex_str:
             # get everything before lat / lon marker
             bound_str = self.ionex_str.split(line_matcher)[0]
@@ -139,8 +138,16 @@ class IonexHandler:
             bound_list = list(map(float, bound_str.split()))
             if len(bound_list) != 3:
                 raise ValueError(f"Too many elements in {line_matcher} definition {bound_str}")
-            self.bounds[bound_str] = bound_list[0:2]
-            self.bounds[f"d{bound_str}"] = bound_list[2]
+            if bound_type_str == "lat":
+                self.bounds.min_lat = bound_list[0]
+                self.bounds.max_lat = bound_list[1]
+                self.bounds.dlat = bound_list[2]
+            elif bound_type_str == "lon":
+                self.bounds.min_lon = bound_list[0]
+                self.bounds.max_lon = bound_list[1]
+                self.bounds.dlon = bound_list[2]
+            else:
+                raise ValueError(f"Invalid bound_type_str {bound_type_str}")
 
     def _get_exponent(self):
         line_matcher = "EXPONENT"
@@ -208,4 +215,4 @@ class IonexHandler:
             map_array[ix,:] = lat_vals_list
         map_array = map_array * (10 ** self.exponent)
 
-        self._tec_maps.append(TecMap(map_array, epoch))
+        self._tec_maps.append(TecMap(epoch, map_array, self.bounds))
