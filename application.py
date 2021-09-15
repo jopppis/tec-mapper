@@ -68,7 +68,9 @@ class TecMapperApplication:
             starting_date = self._yesterday.strftime(self._BOKEH_DATE_FMT)
 
         # user selection dict
-        self._selections = dict(analysis_center="c2p", date_str=starting_date, hour=12, max_tec=100)
+        self._selections = dict(
+            analysis_center="c2p", date_str=starting_date, hour=12, max_tec=100
+        )
 
         # IONEX data handler
         self._ionex_handler = None
@@ -87,7 +89,9 @@ class TecMapperApplication:
     @property
     def date(self):
         """Get Date object of the selected date string."""
-        return datetime.datetime.strptime(self._selections["date_str"], self._BOKEH_DATE_FMT).date()
+        return datetime.datetime.strptime(
+            self._selections["date_str"], self._BOKEH_DATE_FMT
+        ).date()
 
     @property
     def year(self):
@@ -129,7 +133,12 @@ class TecMapperApplication:
 
         # create IONEX handler
         if tec_map is None:
-            self._ui_elements["plots"] = [Div(text="<h1>No IONEX data available for the given selection</h1>", width=800)]
+            self._ui_elements["plots"] = [
+                Div(
+                    text="<h1>No IONEX data available for the given selection</h1>",
+                    width=800,
+                )
+            ]
         else:
             self._ui_elements["plots"] = [tec_map.plot(self._selections["max_tec"])]
 
@@ -166,12 +175,17 @@ class TecMapperApplication:
 
         # add date picker
         date_picker = DatePicker(
-            title="Date", value=self._selections["date_str"], min_date="2000-01-01", max_date=self._yesterday
+            title="Date",
+            value=self._selections["date_str"],
+            min_date="2000-01-01",
+            max_date=self._yesterday,
         )
         date_picker.on_change("value", self._update_date_selection)
 
         # add hour picker
-        hour_slider = Slider(start=0, end=23, value=self._selections["hour"], step=1, title="Hour of day")
+        hour_slider = Slider(
+            start=0, end=23, value=self._selections["hour"], step=1, title="Hour of day"
+        )
         hour_slider.on_change("value", partial(self._update_def_selection, key="hour"))
 
         # add pickers
@@ -180,12 +194,24 @@ class TecMapperApplication:
 
         # add analysis center selector
         menu = [(val, key) for key, val in self.ANALYSIS_CENTERS.items()]
-        analysis_center = Dropdown(label="Analysis center", menu=menu, css_classes =['custom_button_bokeh'])
-        analysis_center.on_click(partial(self._update_analysis_center_selection, analysis_center))
-        self._set_analysis_center_selection_label(analysis_center, self._selections["analysis_center"])
+        analysis_center = Dropdown(
+            label="Analysis center", menu=menu, css_classes=["custom_button_bokeh"]
+        )
+        analysis_center.on_click(
+            partial(self._update_analysis_center_selection, analysis_center)
+        )
+        self._set_analysis_center_selection_label(
+            analysis_center, self._selections["analysis_center"]
+        )
 
         # add max tec slider
-        max_tec = Slider(start=5, end=200, value=self._selections["max_tec"], step=5, title="Max TEC [TECU]")
+        max_tec = Slider(
+            start=5,
+            end=200,
+            value=self._selections["max_tec"],
+            step=5,
+            title="Max TEC [TECU]",
+        )
         max_tec.on_change("value", partial(self._update_def_selection, key="max_tec"))
 
         elements.append(Div(text="<h2>Configure IONEX handling:</h2>"))
@@ -208,13 +234,17 @@ class TecMapperApplication:
 
     def _set_analysis_center_selection_label(self, dropdown, analysis_center_acro):
         """Set label for the analysis center selection."""
-        dropdown.label = f"Analysis center - {self.ANALYSIS_CENTERS[analysis_center_acro]}"
+        dropdown.label = (
+            f"Analysis center - {self.ANALYSIS_CENTERS[analysis_center_acro]}"
+        )
 
     def _update_analysis_center_selection(self, dropdown, event):
         """Update user selection of the analysis center."""
         self._selections["analysis_center"] = event.item
 
-        self._set_analysis_center_selection_label(dropdown, self._selections["analysis_center"])
+        self._set_analysis_center_selection_label(
+            dropdown, self._selections["analysis_center"]
+        )
 
         self._update_ionex()
 
