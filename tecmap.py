@@ -6,9 +6,7 @@ import numpy as np
 from bokeh.models.widgets import Div
 from bokeh.layouts import column
 from bokeh.themes import Theme
-from bokeh.plotting import figure, curdoc
-from bokeh.models import LinearColorMapper, ColorBar
-from bokeh.palettes import Viridis
+from bokeh.plotting import curdoc
 
 import holoviews as hv
 import holoviews.plotting.bokeh
@@ -80,56 +78,6 @@ class TecMap:
 
     def plot(self, max_tec=100):
         """Plot tec map."""
-        color_mapper = LinearColorMapper(palette=Viridis[11], low=0, high=max_tec)
-        color_bar = ColorBar(
-            color_mapper=color_mapper,
-            label_standoff=5,
-        )
-        color_bar.title = "Total Electron Content [TECU]"
-        color_bar.title_text_font_size = self.LABEL_FONT_SIZE
-        tools = "wheel_zoom,box_zoom,pan,reset"
-
-        plot = figure(
-            title=f"TEC Map for {self.epoch_str}",
-            plot_height=self.PLOT_HEIGHT,
-            plot_width=self.PLOT_WIDTH,
-            toolbar_location="above",
-            tools=tools,
-        )
-        plot.xgrid.visible = False
-        plot.ygrid.visible = False
-
-        # plot the map
-        plot.image(
-            image=[self.map],
-            x=-self.MINMAX_LON,
-            y=-self.MINMAX_LAT,
-            dw=self.LON_SPAN,
-            dh=self.LAT_SPAN,
-            color_mapper=color_mapper,
-            level="image",
-        )
-
-        plot.yaxis.axis_label = "Latitude [deg]"
-        plot.xaxis.axis_label = "Longitude [deg]"
-
-        # set styles
-        plot.title.align = "center"
-        plot.title.text_font_size = self.TITLE_FONT_SIZE
-        plot.yaxis.axis_label_text_font_size = self.LABEL_FONT_SIZE
-        plot.xaxis.axis_label_text_font_size = self.LABEL_FONT_SIZE
-
-        # add marin to the plot
-        plot.margin = [10, 0, 30, 20]
-
-
-        # disable padding
-        plot.x_range.range_padding = 0
-        plot.y_range.range_padding = 0
-
-        # Specify figure layout.
-        plot.add_layout(color_bar, "right")
-
         renderer = hv.renderer('bokeh').instance(mode='server')
         dir_path = Path(__file__).parent.resolve()
         yaml_path = dir_path / "theme.yaml"
