@@ -19,4 +19,4 @@ The tool is running in [an example page](https://tec.jopppis.com/tecmapper) wher
 The example page is running on low resources so any issues in page viewing might be caused by too much traffic (however unlikely that might be!).
 
 ## Credits
-Thanks [daniestevez](https://github.com/daniestevez) for providing similar tool in [a notebook enviornment] (https://github.com/daniestevez/jupyter_notebooks/blob/master/IONEX.ipynb) in which the IONEX parsing and handling is based on.
+Thanks [daniestevez](https://github.com/daniestevez) for providing similar tool in [a notebook enviornment](https://github.com/daniestevez/jupyter_notebooks/blob/master/IONEX.ipynb) in which the IONEX parsing and handling is based on.
