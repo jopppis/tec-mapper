@@ -95,7 +95,7 @@ class TecMapperApplication:
         return self.date.strftime("%y")
 
     @property
-    def year_centry(self):
+    def year_century(self):
         """Get selected year as string."""
         return self.date.strftime("%Y")
 
