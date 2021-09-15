@@ -22,6 +22,13 @@ p {
     text-justify: inter-word;
 }
 
+footer {
+    text-align: center;
+    padding: 3px;
+    font-size: 8pt;
+    color: white;
+}
+
 .custom_button_bokeh button.bk.bk-btn.bk-btn-default {
     color: #E0E0E0;
     font-size:12pt;
