@@ -129,6 +129,7 @@ class TecMapperApplication:
     def _update_tec_map(self):
         """Update tec map plot."""
         # get tec map
+        self.logger.info("Getting TEC map")
         tec_map = self._ionex_handler.get_tec_map(self._selections["hour"])
 
         # create IONEX handler
@@ -142,6 +143,7 @@ class TecMapperApplication:
         else:
             self._ui_elements["plots"] = [tec_map.plot(self._selections["max_tec"])]
 
+        self.logger.info("Updating UI")
         self._update_ui()
 
         self.logger.info("TEC map updated")
