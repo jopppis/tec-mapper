@@ -14,6 +14,6 @@ def main():
     parser.add_argument('-s', '--starting_date', default=None, type=str, help="Starting date for the date picker. Use format yyyy-mm-dd")
     parser.add_argument('-v', '--verbose', action="store_true", help="Produce verbose output")
     args = parser.parse_args()
-    app = TecMapperApplication(cache_dir=args.cache_dir, starting_date=args.starting_date, verbose=args.verbose)
+    TecMapperApplication(cache_dir=args.cache_dir, starting_date=args.starting_date, verbose=args.verbose)
 
 main()
