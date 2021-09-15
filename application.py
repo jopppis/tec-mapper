@@ -1,6 +1,8 @@
 #!/usr/bin/env python3
 """IONEX file handling."""
 
+import logging
+import sys
 from collections import OrderedDict
 from functools import partial
 from pathlib import Path
@@ -32,13 +34,23 @@ class TecMapperApplication:
         "igr": "IGS Rapid",
     }
 
-    def __init__(self, cache_dir=None, starting_date=None):
+    def __init__(self, cache_dir=None, starting_date=None, verbose=False):
         """Init instance of application.
 
         Args:
             cache_dir ([str]): Path to use for caching the IONEX files
         """
         self._init = False
+
+        self.logger = logging.getLogger("TecMapper")
+        formatter = logging.Formatter(fmt='[%(asctime)s]:%(levelname)s:%(name)s: %(message)s',
+            datefmt='%H:%M:%S')
+        self.logger.parent.handlers[0].setFormatter(formatter)
+
+        if verbose:
+            self.logger.setLevel(logging.INFO)
+
+        self.logger.info("Initializing TEC Mapper")
 
         # store arguments
         self.cache_dir = Path(cache_dir)
@@ -123,6 +135,8 @@ class TecMapperApplication:
 
         self._update_ui()
 
+        self.logger.info("TEC map updated")
+
     def _get_ui_column(self):
         """Get column for the UI."""
         elements = []
@@ -183,11 +197,12 @@ class TecMapperApplication:
         """Update user selections."""
         # convert string to date
         self._selections[key] = new
-
+        self.logger.info(f"Updating selection {key} to {new}")
         self._update_tec_map()
 
     def _update_date_selection(self, attr, old, new):
         """Update user selections."""
+        self.logger.info(f"Updating date selection to {new}")
         self._selections["date_str"] = new
         self._update_ionex()
 
@@ -205,10 +220,13 @@ class TecMapperApplication:
 
     def _update_ionex(self):
         """Update used IONEX file."""
+        self.logger.info("Downloading IONEX")
         ionex_downloader = IonexDownloader(
             self.filename, self.year_century, self.doy, self.cache_path
         )
 
+        self.logger.info("Handling IONEX")
         self._ionex_handler = IonexHandler(ionex_downloader.str)
 
+        self.logger.info("Updating TEC map")
         self._update_tec_map()
