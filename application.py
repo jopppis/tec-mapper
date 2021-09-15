@@ -2,20 +2,15 @@
 """IONEX file handling."""
 
 from collections import OrderedDict
-import ftplib
-import pycurl
 from functools import partial
 from pathlib import Path
 import datetime
-import unlzw3
-import os
-import tempfile
 
 from bokeh.models.widgets import Div, DatePicker, Slider, Dropdown
 from bokeh.layouts import column, row
 from bokeh.plotting import curdoc
 
-from ionex import IonexHandler
+from ionex import IonexHandler, IonexDownloader
 
 
 class TecMapperApplication:
@@ -113,66 +108,7 @@ class TecMapperApplication:
         if self.cache_dir is None:
             return None
 
-        return self.cache_dir / "ionex" / self.year_centry / self.doy / self.filename
-
-    @staticmethod
-    def ionex_file_ok(file_path):
-        """Check if IONEX file is ok."""
-        return file_path.exists() and file_path.stat().st_size > 0
-
-    def _read_ionex(self, file_path):
-        """Read IONEX file and return it as string."""
-        file_path = Path(file_path)
-        if not self.ionex_file_ok(file_path):
-            return None
-
-        # uncompress the file
-        return unlzw3.unlzw(file_path).decode("utf-8")
-
-    def _get_ionex_str(self):
-        """Get IONEX file from cache or download from online source."""
-        # check if we have path for caching
-        if self.cache_path is not None:
-            # check if the file is not already cached and if cached, it should not be empty
-            if not self.ionex_file_ok(self.cache_path):
-                # create dir for the file
-                os.makedirs(self.cache_path.parents[0], exist_ok=True)
-                # download file to cache
-                self._download_ionex(self.cache_path)
-            if self.cache_path.exists() and not self.ionex_file_ok(self.cache_path):
-                self.cache_path.unlink()
-            # read cached file
-            return self._read_ionex(self.cache_path)
-
-        # open temp file for handling the IONEX
-        with tempfile.NamedTemporaryFile() as fp:
-            # download IONEX file to the temp
-            self._download_ionex(fp.name)
-            # read IONEX from the temp
-            return self._read_ionex(fp.name)
-
-    def _download_ionex(self, dest_path, remove_on_error=False):
-        """Download IONEX file."""
-
-        # ftplib does not play nicely with ufw firewall
-        # ftp = ftplib.FTP("gssc.esa.int", timeout=10)
-        # ftp.login()
-        # try:
-        #     print(f"igs/products/ionex/{self.year_centry}/{self.doy}/{self.filename}")
-        #     ftp.cwd(f"igs/products/ionex/{self.year_centry}/{self.doy}")
-        #     with open(dest_path, "wb") as fp:
-        #         ftp.retrbinary(f"RETR {self.filename}", fp.write)
-        # except ftplib.error_perm:
-        #     # signal failure
-        #     return False
-        with open(dest_path, "wb") as fp:
-            curl = pycurl.Curl()
-            ftp_path = f"igs/products/ionex/{self.year_centry}/{self.doy}/{self.filename}"
-            curl.setopt(pycurl.URL, f"ftp://gssc.esa.int/{ftp_path}")
-            curl.setopt(pycurl.FTPPORT, ":54010-54020")
-            curl.setopt(pycurl.WRITEDATA, fp)
-            curl.perform()
-            curl.close()
+        return self.cache_dir / "ionex" / self.year_century / self.doy / self.filename
 
     def _update_tec_map(self):
         """Update tec map plot."""
@@ -269,6 +205,10 @@ class TecMapperApplication:
 
     def _update_ionex(self):
         """Update used IONEX file."""
-        self._ionex_handler = IonexHandler(self._get_ionex_str())
+        ionex_downloader = IonexDownloader(
+            self.filename, self.year_century, self.doy, self.cache_path
+        )
+
+        self._ionex_handler = IonexHandler(ionex_downloader.str)
 
         self._update_tec_map()
