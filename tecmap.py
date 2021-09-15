@@ -85,7 +85,7 @@ class TecMap:
         img = gw.Image(self.map, bounds=(-180, -87.5, 180, 87.5))
         img = img.redim.range(z=(0, max_tec))
         img.opts(width=self.PLOT_WIDTH, height=self.PLOT_HEIGHT, cmap="Viridis", colorbar=True)
-        hvplot = renderer.get_plot(img * gw.feature.coastline(), curdoc())
+        hvplot = renderer.get_plot(img * gw.feature.coastline())
         layout = hvplot.state
         title_div = Div(text=f"<h1>TEC Map for {self.epoch_str}</h1>", style={"text-align": "center"}, width=self.PLOT_WIDTH)
         return column(title_div, layout)
