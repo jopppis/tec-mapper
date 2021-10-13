@@ -84,14 +84,17 @@ class IonexDownloader:
         #     # signal failure
         #     return False
         with open(dest_path, "wb") as fp:
-            curl = pycurl.Curl()
-            ftp_path = f"igs/products/ionex/{self.year_century}/{self.doy}/{self.filename}"
-            curl.setopt(pycurl.URL, f"ftp://gssc.esa.int/{ftp_path}")
-            curl.setopt(pycurl.FTPPORT, ":54010-54020")
-            curl.setopt(pycurl.WRITEDATA, fp)
-            curl.perform()
-            curl.close()
-
+            try:
+                curl = pycurl.Curl()
+                ftp_path = f"gnss/products/ionex/{self.year_century}/{self.doy}/{self.filename}"
+                curl.setopt(pycurl.URL, f"ftp://gssc.esa.int/{ftp_path}")
+                curl.setopt(pycurl.FTPPORT, ":54010-54020")
+                curl.setopt(pycurl.WRITEDATA, fp)
+                curl.perform()
+                curl.close()
+            except pycurl.error:
+                # failed to download the file
+                pass
 
 class IonexHandler:
     """Class to read IONEX file and store TEC maps extracted from the IONEX data.
@@ -128,6 +131,9 @@ class IonexHandler:
         return self.bounds.num_rows, self.bounds.num_cols
 
     def _get_bound(self, bound_type_str):
+        if self.ionex_str is None:
+            return None
+
         line_matcher = f"{bound_type_str.upper()}1 / {bound_type_str.upper()}2 / D{bound_type_str.upper()}"
         if line_matcher in self.ionex_str:
             # get everything before lat / lon marker
@@ -150,6 +156,9 @@ class IonexHandler:
                 raise ValueError(f"Invalid bound_type_str {bound_type_str}")
 
     def _get_exponent(self):
+        if self.ionex_str is None:
+            return None
+
         line_matcher = "EXPONENT"
         if line_matcher in self.ionex_str:
             # get everything before EXPONENT marker
