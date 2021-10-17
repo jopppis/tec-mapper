@@ -60,12 +60,12 @@ class TecMapperApplication:
         self._ui_elements["pickers"] = []
         self._ui_elements["plots"] = []
 
-        # get date for yesterday
-        self._yesterday = datetime.date.today() - datetime.timedelta(days=1)
+        # get date for today
+        self._today = datetime.date.today()
 
         # get starting date
         if starting_date is None:
-            starting_date = self._yesterday.strftime(self._BOKEH_DATE_FMT)
+            starting_date = self._today.strftime(self._BOKEH_DATE_FMT)
 
         # user selection dict
         self._selections = dict(
@@ -180,7 +180,7 @@ class TecMapperApplication:
             title="Date",
             value=self._selections["date_str"],
             min_date="2000-01-01",
-            max_date=self._yesterday,
+            max_date=self._today + datetime.timedelta(days=2),
         )
         date_picker.on_change("value", self._update_date_selection)
 
