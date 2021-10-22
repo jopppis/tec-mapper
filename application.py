@@ -65,7 +65,8 @@ class TecMapperApplication:
 
         # get starting date
         if starting_date is None:
-            starting_date = self._today.strftime(self._BOKEH_DATE_FMT)
+            yesterday = self._today - datetime.timedelta(days=1)
+            starting_date = yesterday.strftime(self._BOKEH_DATE_FMT)
 
         # user selection dict
         self._selections = dict(
@@ -254,7 +255,7 @@ class TecMapperApplication:
         """Update used IONEX file."""
         self.logger.info("Downloading IONEX")
         ionex_downloader = IonexDownloader(
-            self.filename, self.year_century, self.doy, self.cache_path
+            self.filename, self.year_century, self.doy, self.cache_path, logger=self.logger
         )
 
         self.logger.info("Handling IONEX")
