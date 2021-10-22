@@ -3,6 +3,7 @@
 
 import datetime
 import re
+import logging
 from dataclasses import dataclass
 # import ftplib
 import os
@@ -19,12 +20,17 @@ from tecmap import MapBounds, TecMap
 class IonexDownloader:
     """Class to handle downloading of IONEX files."""
 
-    def __init__(self, filename, year_century, doy, cache_path=None):
+    def __init__(self, filename, year_century, doy, cache_path=None, logger=None):
         """Init the instance."""
         self.cache_path = cache_path
         self.year_century = year_century
         self.doy = doy
         self.filename = filename
+
+        if logger is None:
+            self.logger = logging.getLogger(__name__)
+        else:
+            self.logger = logger
 
         self._ionex_str = self._get_ionex_str()
 
@@ -83,6 +89,7 @@ class IonexDownloader:
         # except ftplib.error_perm:
         #     # signal failure
         #     return False
+        ftp_path = ""
         with open(dest_path, "wb") as fp:
             try:
                 curl = pycurl.Curl()
@@ -92,9 +99,11 @@ class IonexDownloader:
                 curl.setopt(pycurl.WRITEDATA, fp)
                 curl.perform()
                 curl.close()
-            except pycurl.error:
+            except pycurl.error as e:
                 # failed to download the file
-                pass
+                self.logger.info(f"Unable to download file {ftp_path}")
+                self.logger.info(f"Reason: {e}")
+
 
 class IonexHandler:
     """Class to read IONEX file and store TEC maps extracted from the IONEX data.
