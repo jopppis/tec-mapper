@@ -18,6 +18,13 @@ The tool is running in [an example page](https://tec.jopppis.com/tecmapper) wher
 
 The example page is running on low resources so any issues in page viewing might be caused by too much traffic (however unlikely that might be!).
 
+## Usage
+1. Install docker
+2. Install docker-compose
+3. Go to the root of the repository
+4. Execute `docker-compose up`
+5. Open http://localhost:5100/app on your browser
+
 ## TODO
 * Add some form of dependency handling (requirements.txt?)
 * Add next day and previous day buttons

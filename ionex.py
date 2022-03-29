@@ -95,7 +95,6 @@ class IonexDownloader:
                 curl = pycurl.Curl()
                 ftp_path = f"gnss/products/ionex/{self.year_century}/{self.doy}/{self.filename}"
                 curl.setopt(pycurl.URL, f"ftp://gssc.esa.int/{ftp_path}")
-                curl.setopt(pycurl.FTPPORT, ":54010-54020")
                 curl.setopt(pycurl.WRITEDATA, fp)
                 curl.perform()
                 curl.close()

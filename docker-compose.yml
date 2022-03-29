@@ -1,0 +1,14 @@
+version: "3.5"
+services:
+  tecmapper:
+    container_name: tecmapper
+    build: .
+    volumes:
+      - ionex:/ionex
+    restart: unless-stopped
+    ports:
+      - "5100:5100"
+    command: bokeh serve /app --port 5100 --allow-websocket-origin="tec.jopppis.com" --args --cache_dir /ionex -v
+
+volumes:
+  ionex:
