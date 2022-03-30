@@ -14,7 +14,7 @@ The tool allows user to select an IGS analysis center, time and date for mapping
 The visualization part is based on [bokeh](https://bokeh.org/) and [geoviews](https://geoviews.org/).
 
 ## Example
-The tool is running in [an example page](https://tec.jopppis.com/tecmapper) where it can be tried out.
+The tool is running in [an example page](https://tec.jopppis.com/app) where it can be tried out.
 
 The example page is running on low resources so any issues in page viewing might be caused by too much traffic (however unlikely that might be!).
 
